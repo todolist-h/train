@@ -374,7 +374,7 @@
                     ];
 
                     let troubleList = [];
-                    const rows = doc.querySelectorAll('table tr, .elmTblDiaInfo tr, dl, .trouble');
+                    const rows = doc.querySelectorAll('table tr, .elmTblDiaInfo tr, dl, .trouble, p, div');
 
                     rows.forEach(row => {
                         const txt = row.textContent || "";
@@ -383,17 +383,21 @@
                                 const matchedLine = parsedLines.find(l => l.name === lineName);
                                 if (matchedLine) {
                                     let status = "normal";
-                                    if (txt.includes("遅延") || txt.includes("遅れ") || txt.includes("乱れ")) {
-                                        status = "delay";
-                                    } else if (txt.includes("見合わせ") || txt.includes("運休") || txt.includes("不通")) {
+                                    // 判定キーワードの拡張（「本数を減らして」「取り止め」「一部運休」などを追加）
+                                    if (txt.includes("見合わせ") || txt.includes("全線運休") || txt.includes("不通")) {
                                         status = "suspended";
+                                    } else if (
+                                        txt.includes("遅延") || txt.includes("遅れ") || txt.includes("乱れ") ||
+                                        txt.includes("減便") || txt.includes("本数を減らして") || txt.includes("取り止め") ||
+                                        txt.includes("一部運休") || txt.includes("変更")
+                                    ) {
+                                        status = "delay";
                                     }
 
-                                    const cleanDetail = txt.replace(/\s+/g, ' ').trim();
-                                    matchedLine.status = status;
-                                    matchedLine.detail = cleanDetail.length > 10 ? cleanDetail : `${lineName}で遅れや運休が発生しています。`;
-
                                     if (status !== 'normal') {
+                                        const cleanDetail = txt.replace(/\s+/g, ' ').trim();
+                                        matchedLine.status = status;
+                                        matchedLine.detail = cleanDetail.length > 10 ? cleanDetail.substring(0, 100) : `${lineName}で遅れやダイヤ変更が発生しています。`;
                                         troubleList.push(`${lineName}：${matchedLine.detail}`);
                                     }
                                 }
@@ -410,7 +414,7 @@
                     fetchSuccess = true;
                 }
             } catch (err) {
-                console.warn("LIVEデータの取得に制限があったため標準運用表示を継続します:", err);
+                console.warn("LIVEデータの取得に制限があったため、取得状態を通知します:", err);
             } finally {
                 currentTrainData.last_updated = formattedTime;
 
@@ -420,13 +424,14 @@
                         sourceBadge.className = "bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5";
                     }
                 } else {
-                    if (syncText) syncText.innerText = "通常運用（確認済）";
+                    // 取得失敗時に誤解を与えないよう「通信確認中/手動確認推奨」表示に変更
+                    if (syncText) syncText.innerText = "通信制限中（手動確認推奨）";
                     if (sourceBadge) {
-                        sourceBadge.className = "bg-blue-100 text-blue-800 border border-blue-300 px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5";
+                        sourceBadge.className = "bg-amber-100 text-amber-800 border border-amber-300 px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5";
                     }
                 }
 
-                // どんな場合でも必ず画面を更新
+                // どんな場合でも画面を更新
                 applyDataToUI();
 
                 if (syncSpinner) syncSpinner.classList.add('hidden');
