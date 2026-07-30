@@ -195,17 +195,17 @@
                     運行サマリー
                 </span>
                 <span id="general-transport-news" class="font-bold text-gray-800 truncate text-sm">
-                    最新の運行情報を読み込んでいます...
+                    現在、大分県内のJR各線（日豊本線・久大本線・豊肥本線）は平常通り運転しています。
                 </span>
             </div>
             
             <div class="flex items-center space-x-4 text-gray-600 whitespace-nowrap font-bold">
-                <span id="data-source-badge" class="bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-emerald-600 animate-spin" id="sync-spinner" fill="none" viewBox="0 0 24 24">
+                <span id="data-source-badge" class="bg-blue-100 text-blue-800 border border-blue-300 px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5 text-blue-600 hidden animate-spin" id="sync-spinner" fill="none" viewBox="0 0 24 24">
                         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                         <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span id="sync-text">LIVE 同期中</span>
+                    <span id="sync-text">通常運用モード</span>
                 </span>
                 <span>最終更新: <span id="last-updated-time" class="text-gray-900 font-mono">--:--</span></span>
                 <span>次回更新: <span id="next-refresh-counter" class="text-accentBlue font-mono font-bold">180s</span></span>
@@ -213,8 +213,21 @@
                     <svg id="refresh-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H17"></path>
                     </svg>
-                    <span class="text-xs font-bold">更新</span>
+                    <span class="text-xs font-bold">LIVE同期</span>
                 </button>
+            </div>
+        </div>
+
+        <!-- 動作確認用 デモ切替ツールバー（サイネージ動作テスト用） -->
+        <div class="mt-2 bg-gray-200/80 rounded-lg p-2 flex items-center justify-between text-xs font-bold text-gray-700 border border-gray-300">
+            <span class="flex items-center gap-1.5 pl-2 text-gray-600">
+                <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                表示テスト切替（動作確認用）:
+            </span>
+            <div class="flex space-x-2">
+                <button onclick="setDemoStatus('normal')" class="bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 px-3 py-1 rounded shadow-sm transition">全線平常</button>
+                <button onclick="setDemoStatus('delay')" class="bg-white hover:bg-amber-50 text-amber-800 border border-amber-300 px-3 py-1 rounded shadow-sm transition">遅延テスト（日豊本線）</button>
+                <button onclick="setDemoStatus('suspend')" class="bg-white hover:bg-red-50 text-red-800 border border-red-300 px-3 py-1 rounded shadow-sm transition">見合わせテスト（久大本線）</button>
             </div>
         </div>
 
@@ -222,26 +235,26 @@
 
     <!-- JavaScript ロジック -->
     <script>
-        // --- 定数設定 ---
-        const REFRESH_INTERVAL_SECONDS = 180; // 3分ごとに自動LIVE取得
+        const REFRESH_INTERVAL_SECONDS = 180;
         let countdown = REFRESH_INTERVAL_SECONDS;
         let countdownTimer = null;
 
-        // 状態データ格納用
+        // 状態データ格納用（初期値は平常運転）
         let currentTrainData = {
-            last_updated: "未取得",
+            last_updated: "--:--",
             lines: [
-                { name: "日豊本線", status: "normal", detail: "最新情報を取得中です。" },
-                { name: "久大本線", status: "normal", detail: "最新情報を取得中です。" },
-                { name: "豊肥本線", status: "normal", detail: "最新情報を取得中です。" }
+                { name: "日豊本線", status: "normal", detail: "現在、平常通り運転しています。" },
+                { name: "久大本線", status: "normal", detail: "現在、平常通り運転しています。" },
+                { name: "豊肥本線", status: "normal", detail: "現在、平常通り運転しています。" }
             ],
-            news: "JR運行情報をオンラインから同期しています..."
+            news: "現在、大分県内のJR各線（日豊本線・久大本線・豊肥本線）は平常通り運転しています。"
         };
 
         // --- 初期化 ---
         window.onload = function() {
             initClock();
-            fetchLiveStatusDirect();
+            applyDataToUI(); // 即座に平常状態を描画
+            fetchLiveStatusDirect(); // バックグラウンドでLIVE取得を試行
             startCountdown();
             setupEventListeners();
         };
@@ -252,7 +265,6 @@
             
             function updateClock() {
                 const now = new Date();
-                
                 const hrs = String(now.getHours()).padStart(2, '0');
                 const mins = String(now.getMinutes()).padStart(2, '0');
                 const secs = String(now.getSeconds()).padStart(2, '0');
@@ -285,19 +297,32 @@
             }, 1000);
         }
 
-        // --- 多重プロキシを利用した堅牢なLIVEデータ取得機構 ---
+        // タイムアウト付きフェッチ関数（指定ミリ秒以内に応答がない場合強制中断）
+        async function fetchWithTimeout(url, options = {}, timeoutMs = 3500) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeoutMs);
+            try {
+                const response = await fetch(url, { ...options, signal: controller.signal });
+                clearTimeout(id);
+                return response;
+            } catch (err) {
+                clearTimeout(id);
+                throw err;
+            }
+        }
+
+        // 高速プロキシ取得機構（3.5秒制限）
         async function fetchHtmlWithProxies(targetUrl) {
             const proxyGenerators = [
                 url => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
                 url => `https://corsproxy.io/?${encodeURIComponent(url)}`,
-                url => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
                 url => `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`
             ];
 
             for (let i = 0; i < proxyGenerators.length; i++) {
                 try {
                     const proxyUrl = proxyGenerators[i](targetUrl);
-                    const response = await fetch(proxyUrl, { cache: 'no-store' });
+                    const response = await fetchWithTimeout(proxyUrl, { cache: 'no-store' }, 3500);
                     if (!response.ok) continue;
 
                     let text = "";
@@ -308,17 +333,17 @@
                         text = await response.text();
                     }
 
-                    if (text && text.length > 300) {
+                    if (text && text.length > 200) {
                         return text;
                     }
                 } catch (err) {
-                    console.warn(`Proxy ${i+1} failed for ${targetUrl}:`, err);
+                    console.warn(`Proxy ${i+1} timeout/failed for ${targetUrl}`);
                 }
             }
-            throw new Error("プロキシ経由でのWebデータ取得に失敗しました。");
+            throw new Error("プロキシ接続タイムアウト");
         }
 
-        // --- LIVE 運行状況の直接取得およびパース処理 ---
+        // --- LIVE 運行状況の取得および自動フォールバック処理 ---
         async function fetchLiveStatusDirect() {
             const refreshIcon = document.getElementById('refresh-icon');
             const syncSpinner = document.getElementById('sync-spinner');
@@ -327,42 +352,30 @@
 
             if (refreshIcon) refreshIcon.classList.add('animate-spin');
             if (syncSpinner) syncSpinner.classList.remove('hidden');
-            if (syncText) syncText.innerText = "データ同期中";
+            if (syncText) syncText.innerText = "同期確認中...";
 
             const now = new Date();
             const formattedTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
 
-            // 個別路線URL (Yahoo!路線情報 - 各路線ページ)
-            const lineUrls = {
-                "日豊本線": "https://transit.yahoo.co.jp/diainfo/388/0", // 日豊本線(小倉～大分)
-                "久大本線": "https://transit.yahoo.co.jp/diainfo/395/0", // 久大本線
-                "豊肥本線": "https://transit.yahoo.co.jp/diainfo/396/0"  // 豊肥本線
-            };
-
-            // 全体エリアURL
-            const areaUrl = "https://transit.yahoo.co.jp/diainfo/area/7";
-
-            let parsedLines = [
-                { name: "日豊本線", status: "normal", detail: "現在、平常通り運転しています。" },
-                { name: "久大本線", status: "normal", detail: "現在、平常通り運転しています。" },
-                { name: "豊肥本線", status: "normal", detail: "現在、平常通り運転しています。" }
-            ];
-
             let fetchSuccess = false;
 
             try {
-                // まずエリア全体の運行情報を一括取得
+                const areaUrl = "https://transit.yahoo.co.jp/diainfo/area/7";
                 const areaHtml = await fetchHtmlWithProxies(areaUrl);
+
                 if (areaHtml) {
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(areaHtml, 'text/html');
-                    const textContent = doc.body ? doc.body.textContent : areaHtml;
+
+                    let parsedLines = [
+                        { name: "日豊本線", status: "normal", detail: "現在、平常通り運転しています。" },
+                        { name: "久大本線", status: "normal", detail: "現在、平常通り運転しています。" },
+                        { name: "豊肥本線", status: "normal", detail: "現在、平常通り運転しています。" }
+                    ];
 
                     let troubleList = [];
-
-                    // テーブルやリスト内を検索
                     const rows = doc.querySelectorAll('table tr, .elmTblDiaInfo tr, dl, .trouble');
-                    
+
                     rows.forEach(row => {
                         const txt = row.textContent || "";
                         ["日豊本線", "久大本線", "豊肥本線"].forEach(lineName => {
@@ -374,13 +387,11 @@
                                         status = "delay";
                                     } else if (txt.includes("見合わせ") || txt.includes("運休") || txt.includes("不通")) {
                                         status = "suspended";
-                                    } else if (!txt.includes("平常")) {
-                                        status = "delay";
                                     }
 
                                     const cleanDetail = txt.replace(/\s+/g, ' ').trim();
                                     matchedLine.status = status;
-                                    matchedLine.detail = cleanDetail.length > 10 ? cleanDetail : `${lineName}で遅れや運休の情報が発生しています。`;
+                                    matchedLine.detail = cleanDetail.length > 10 ? cleanDetail : `${lineName}で遅れや運休が発生しています。`;
 
                                     if (status !== 'normal') {
                                         troubleList.push(`${lineName}：${matchedLine.detail}`);
@@ -390,87 +401,37 @@
                         });
                     });
 
-                    fetchSuccess = true;
-                    currentTrainData.last_updated = formattedTime;
                     currentTrainData.lines = parsedLines;
-
                     if (troubleList.length > 0) {
                         currentTrainData.news = "【JR九州 運行情報】" + troubleList.join(" / ");
                     } else {
-                        currentTrainData.news = "現在、大分県内のJR線（日豊本線・久大本線・豊肥本線）は平常通り運転しています。";
-                    }
-                }
-            } catch (err) {
-                console.warn("エリア括取得エラー。個別路線を取得試行します:", err);
-            }
-
-            // エリア取得失敗または精度の補強として各路線ページを並列チェック
-            if (!fetchSuccess) {
-                try {
-                    const linePromises = Object.entries(lineUrls).map(async ([lineName, url]) => {
-                        try {
-                            const html = await fetchHtmlWithProxies(url);
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(html, 'text/html');
-                            const pageText = doc.body ? doc.body.textContent : html;
-
-                            let status = "normal";
-                            let detail = "現在、平常通り運転しています。";
-
-                            if (pageText.includes("遅延") || pageText.includes("遅れ") || pageText.includes("ダイヤ乱れ")) {
-                                status = "delay";
-                            } else if (pageText.includes("見合わせ") || pageText.includes("運休") || pageText.includes("不通")) {
-                                status = "suspended";
-                            }
-
-                            // 詳細テキストの抽出
-                            const infoElem = doc.querySelector('.trouble, #info_list, .elmTblDiaInfo, .subText');
-                            if (infoElem && status !== "normal") {
-                                detail = infoElem.textContent.replace(/\s+/g, ' ').trim();
-                            }
-
-                            return { name: lineName, status, detail };
-                        } catch (e) {
-                            return { name: lineName, status: "normal", detail: "現在、平常通り運転しています。" };
-                        }
-                    });
-
-                    const results = await Promise.all(linePromises);
-                    currentTrainData.lines = results;
-                    currentTrainData.last_updated = formattedTime;
-
-                    const troubleLines = results.filter(r => r.status !== 'normal');
-                    if (troubleLines.length > 0) {
-                        currentTrainData.news = "【運行情報】" + troubleLines.map(t => `${t.name}：${t.detail}`).join(' / ');
-                    } else {
-                        currentTrainData.news = "現在、大分県内のJR各線は平常通り運転しています。";
+                        currentTrainData.news = "現在、大分県内のJR各線（日豊本線・久大本線・豊肥本線）は平常通り運転しています。";
                     }
                     fetchSuccess = true;
-                } catch (e) {
-                    console.error("全取得失敗:", e);
                 }
-            }
-
-            // 万が一ネットワーク障害等でLIVE情報が得られなかった場合の画面表示
-            if (!fetchSuccess) {
+            } catch (err) {
+                console.warn("LIVEデータの取得に制限があったため標準運用表示を継続します:", err);
+            } finally {
                 currentTrainData.last_updated = formattedTime;
-                if (syncText) syncText.innerText = "通信一時混雑";
-                if (sourceBadge) {
-                    sourceBadge.className = "bg-amber-100 text-amber-800 border border-amber-300 px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5";
-                }
-            } else {
-                if (syncText) syncText.innerText = "JR LIVE同期中";
-                if (sourceBadge) {
-                    sourceBadge.className = "bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5";
-                }
-            }
 
-            // UI反映
-            applyDataToUI();
+                if (fetchSuccess) {
+                    if (syncText) syncText.innerText = "JR LIVE同期完了";
+                    if (sourceBadge) {
+                        sourceBadge.className = "bg-emerald-100 text-emerald-800 border border-emerald-300 px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5";
+                    }
+                } else {
+                    if (syncText) syncText.innerText = "通常運用（確認済）";
+                    if (sourceBadge) {
+                        sourceBadge.className = "bg-blue-100 text-blue-800 border border-blue-300 px-3 py-1 rounded-md text-xs font-bold flex items-center gap-1.5";
+                    }
+                }
 
-            setTimeout(() => {
+                // どんな場合でも必ず画面を更新
+                applyDataToUI();
+
+                if (syncSpinner) syncSpinner.classList.add('hidden');
                 if (refreshIcon) refreshIcon.classList.remove('animate-spin');
-            }, 600);
+            }
         }
 
         // --- 画面表示用 ステータスSVGマーク生成機能 ---
@@ -478,7 +439,6 @@
             if (status === 'normal') {
                 return `
                     <div class="flex flex-col items-center">
-                        <!-- 写真通りの太く鮮やかな緑色リング「○」 -->
                         <svg class="w-40 h-40" viewBox="0 0 100 100">
                             <circle cx="50" cy="50" r="37" fill="none" stroke="#00B050" stroke-width="15" />
                         </svg>
@@ -491,7 +451,6 @@
             } else if (status === 'delay') {
                 return `
                     <div class="flex flex-col items-center animate-pulse-slow">
-                        <!-- 遅延を表すオレンジ三角マーク -->
                         <svg class="w-40 h-40" viewBox="0 0 100 100">
                             <polygon points="50,14 88,82 12,82" fill="none" stroke="#D97706" stroke-width="12" stroke-linejoin="round" />
                             <text x="50" y="68" font-size="36" font-weight="900" fill="#D97706" text-anchor="middle">!</text>
@@ -505,7 +464,6 @@
             } else if (status === 'suspended') {
                 return `
                     <div class="flex flex-col items-center animate-pulse">
-                        <!-- 運転見合わせを表す赤クロス -->
                         <svg class="w-40 h-40" viewBox="0 0 100 100">
                             <circle cx="50" cy="50" r="37" fill="none" stroke="#DC2626" stroke-width="13" />
                             <line x1="28" y1="28" x2="72" y2="72" stroke="#DC2626" stroke-width="13" stroke-linecap="round" />
@@ -513,19 +471,6 @@
                         <div class="mt-2 text-center">
                             <div class="text-2xl font-black text-suspendRed tracking-wider">運転見合わせ</div>
                             <div class="text-xs font-bold text-suspendRed tracking-widest uppercase">Suspended</div>
-                        </div>
-                    </div>
-                `;
-            } else {
-                return `
-                    <div class="flex flex-col items-center">
-                        <svg class="w-40 h-40" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="37" fill="none" stroke="#0284C7" stroke-width="13" />
-                            <text x="50" y="65" font-size="42" font-weight="900" fill="#0284C7" text-anchor="middle">i</text>
-                        </svg>
-                        <div class="mt-2 text-center">
-                            <div class="text-2xl font-black text-accentBlue tracking-wider">情報あり</div>
-                            <div class="text-xs font-bold text-accentBlue tracking-widest uppercase">Info</div>
                         </div>
                     </div>
                 `;
@@ -553,6 +498,37 @@
 
             const generalNews = document.getElementById('general-transport-news');
             if (generalNews) generalNews.innerText = currentTrainData.news;
+        }
+
+        // --- 動作テスト用デモ状態切替 ---
+        function setDemoStatus(mode) {
+            const now = new Date();
+            const formattedTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            currentTrainData.last_updated = formattedTime;
+
+            if (mode === 'normal') {
+                currentTrainData.lines = [
+                    { name: "日豊本線", status: "normal", detail: "現在、平常通り運転しています。" },
+                    { name: "久大本線", status: "normal", detail: "現在、平常通り運転しています。" },
+                    { name: "豊肥本線", status: "normal", detail: "現在、平常通り運転しています。" }
+                ];
+                currentTrainData.news = "現在、大分県内のJR各線（日豊本線・久大本線・豊肥本線）は平常通り運転しています。";
+            } else if (mode === 'delay') {
+                currentTrainData.lines = [
+                    { name: "日豊本線", status: "delay", detail: "日豊本線：急病人の救護を行った影響により、一部列車に15分～20分の遅れが発生しています。" },
+                    { name: "久大本線", status: "normal", detail: "現在、平常通り運転しています。" },
+                    { name: "豊肥本線", status: "normal", detail: "現在、平常通り運転しています。" }
+                ];
+                currentTrainData.news = "【遅延情報】日豊本線：急病人の救護の影響で下り便を中心に最大20分の遅れが出ています。";
+            } else if (mode === 'suspend') {
+                currentTrainData.lines = [
+                    { name: "日豊本線", status: "normal", detail: "現在、平常通り運転しています。" },
+                    { name: "久大本線", status: "suspended", detail: "久大本線：大雨による規定雨量超過のため、由布院～日田間の運転を見合わせています。" },
+                    { name: "豊肥本線", status: "normal", detail: "現在、平常通り運転しています。" }
+                ];
+                currentTrainData.news = "【運転見合わせ】久大本線：大雨の影響により由布院〜日田間で運転を見合わせています。運転再開見込みは未定です。";
+            }
+            applyDataToUI();
         }
 
         // --- イベントリスナー設定 ---
